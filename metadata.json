@@ -1,0 +1,6 @@
+{
+  "name": "Smart Digital Literacy App",
+  "description": "A B.Tech Community Service Project (CSP) educational platform for rural village residents supporting English, Telugu, Tamil, and Hindi with speech guidance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

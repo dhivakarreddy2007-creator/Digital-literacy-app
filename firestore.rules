@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Strict Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reuseable global safety checks
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Standalone Validation Blueprints
+    function isValidSurvey(data) {
+      return data.keys().hasAll([
+        'id', 'fullName', 'villageName', 'age', 'gender', 'phoneNumber',
+        'educationLevel', 'isSmartphoneUser', 'isInternetUser', 'hasDigitalAwareness', 'createdAt'
+      ])
+      && data.keys().size() == 11
+      && isValidId(data.id)
+      && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 150
+      && data.villageName is string && data.villageName.size() >= 2 && data.villageName.size() <= 150
+      && data.age is number && data.age >= 0 && data.age <= 150
+      && data.gender is string && (data.gender == 'Male' || data.gender == 'Female' || data.gender == 'Other')
+      && data.phoneNumber is string && data.phoneNumber.size() >= 8 && data.phoneNumber.size() <= 20
+      && data.educationLevel is string && data.educationLevel.size() <= 100
+      && data.isSmartphoneUser is bool
+      && data.isInternetUser is bool
+      && data.hasDigitalAwareness is bool
+      && (data.createdAt is timestamp || data.createdAt is string);
+    }
+
+    function isValidCertificate(data) {
+      return data.keys().hasAll(['id', 'userName', 'villageName', 'score', 'date', 'sha'])
+      && data.keys().size() == 6
+      && isValidId(data.id)
+      && data.userName is string && data.userName.size() >= 2 && data.userName.size() <= 150
+      && data.villageName is string && data.villageName.size() >= 2 && data.villageName.size() <= 150
+      && data.score is number && data.score >= 0 && data.score <= 100
+      && data.date is string && data.date.size() <= 24
+      && data.sha is string && data.sha.size() <= 50;
+    }
+
+    function isValidUserProgress(data) {
+      return data.keys().hasAll(['surveyCompleted', 'completedModules', 'quizHighScores', 'badges'])
+      && data.keys().size() == 4
+      && data.surveyCompleted is bool
+      && data.completedModules is list && data.completedModules.size() <= 50
+      && data.quizHighScores is map
+      && data.badges is list && data.badges.size() <= 50;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // 1. Surveys Collection
+    match /surveys/{surveyId} {
+      // Create is public so local village residents can participate as guests
+      allow create: if isValidId(surveyId) && isValidSurvey(incoming());
+      
+      // Reading surveys (including list queries) is enabled for admin dashboard & exports
+      allow read: if true;
+      
+      // Surveys are historical audit trails and completely immutable once written
+      allow update, delete: if false;
+    }
+
+    // 2. Certificates Collection
+    match /certificates/{certId} {
+      // Create is public so users passing the quiz can register certificates
+      allow create: if isValidId(certId) && isValidCertificate(incoming());
+      
+      // Verify is publicly readable (lookup single cert doc or verify list)
+      allow read: if true;
+      
+      // Certificates are immutable once created
+      allow update, delete: if false;
+    }
+
+    // 3. User Progress logs
+    match /progress/{userId} {
+      allow read: if isValidId(userId);
+      
+      allow create, update: if isValidId(userId) && isValidUserProgress(incoming());
+        
+      allow delete: if false;
+    }
+  }
+}

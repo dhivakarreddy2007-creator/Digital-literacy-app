@@ -1,0 +1,64 @@
+{
+  "entities": {
+    "SurveyResponse": {
+      "title": "SurveyResponse",
+      "description": "User digital literacy survey registration",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "villageName": { "type": "string" },
+        "age": { "type": "integer" },
+        "gender": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "educationLevel": { "type": "string" },
+        "isSmartphoneUser": { "type": "boolean" },
+        "isInternetUser": { "type": "boolean" },
+        "hasDigitalAwareness": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "fullName", "villageName", "age", "gender", "phoneNumber", "educationLevel", "isSmartphoneUser", "isInternetUser", "hasDigitalAwareness"]
+    },
+    "CertificateRecord": {
+      "title": "CertificateRecord",
+      "description": "Information about generated certificates",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userName": { "type": "string" },
+        "villageName": { "type": "string" },
+        "score": { "type": "integer" },
+        "date": { "type": "string" },
+        "sha": { "type": "string" }
+      },
+      "required": ["id", "userName", "villageName", "score", "date"]
+    },
+    "UserProgress": {
+      "title": "UserProgress",
+      "description": "Completed visual modules",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "surveyCompleted": { "type": "boolean" },
+        "completedModules": { "type": "array" },
+        "quizHighScores": { "type": "object" },
+        "badges": { "type": "array" }
+      },
+      "required": ["id", "surveyCompleted", "completedModules", "quizHighScores"]
+    }
+  },
+  "firestore": {
+    "/surveys/{surveyId}": {
+      "schema": "SurveyResponse",
+      "description": "Village level survey response collections"
+    },
+    "/certificates/{certId}": {
+      "schema": "CertificateRecord",
+      "description": "Issued digital literacy project certificates"
+    },
+    "/progress/{userId}": {
+      "schema": "UserProgress",
+      "description": "Track modules, achievements, and badges"
+    }
+  }
+}
